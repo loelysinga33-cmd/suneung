@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>수능 고사장 준비 역할표</title>
+<style>
+  :root { --mint:#cdf2e4; --ink:#1d2a26; --line:#d9e3df; --accent:#1f8a66; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",sans-serif; color:var(--ink); background:#f5f8f7; }
+  header { position:sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line); padding:14px 16px 12px; }
+  h1 { margin:0 0 10px; font-size:1.35rem; }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; }
+  input[type=search] { flex:1 1 220px; font-size:1.05rem; padding:10px 12px; border:1px solid var(--line); border-radius:10px; }
+  .tabs button { font-size:1rem; padding:10px 14px; border:1px solid var(--line); background:#fff; border-radius:10px; cursor:pointer; }
+  .tabs button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  main { padding:14px 16px 40px; max-width:1100px; margin:0 auto; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+  .card.helper { background:var(--mint); }
+  .top { display:flex; align-items:baseline; gap:10px; margin-bottom:6px; }
+  .no { font-weight:700; color:var(--accent); font-size:1.1rem; min-width:2ch; }
+  .name { font-weight:700; font-size:1.2rem; }
+  .role { margin-left:auto; font-size:.95rem; background:#eef4f2; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+  .helper .role { background:#fff; }
+  .tool { font-size:.92rem; color:#4b5d57; margin:2px 0 8px; }
+  ul { list-style:none; margin:0; padding:0; }
+  li label { display:flex; gap:10px; align-items:flex-start; padding:7px 0; border-top:1px dashed var(--line); line-height:1.45; font-size:1rem; cursor:pointer; }
+  li input { width:20px; height:20px; margin-top:2px; flex:none; accent-color:var(--accent); }
+  li input:checked + span { color:#8a9893; text-decoration:line-through; }
+  h2 { font-size:1.1rem; margin:22px 0 10px; padding-left:10px; border-left:4px solid var(--accent); }
+  .empty { color:#6b7a75; padding:30px 0; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📝 수능 고사장 준비 역할표</h1>
+  <div class="bar">
+    <input id="q" type="search" placeholder="이름·번호·담당으로 찾기 (예: 칠판)">
+    <div class="tabs">
+      <button data-v="person" class="on">번호순</button>
+      <button data-v="role">담당별</button>
+    </div>
+  </div>
+</header>
+<main id="out"></main>
+
+<script>
+const DATA = [
+  [1,"구민기","학급물품 이동","","교탁 옆 여분 책상 2세트: 책상에 의자를 넣어서, 학생용 책상 2개는 서랍 입구가 벽을 향하도록 복도 벽 쪽에 정리|학생용 의자 2개는 사물함 앞에 놓아두기|청소하는 동안 청소도구함은 문이 복도를 향하도록 복도 벽 쪽에 정리|책장은 선생님 자리에 가져다 두기|청소 종료 후 청소도구함 벽 쪽으로 돌려놓기|시험 종료 후 청소도구함 제자리에 놓기"],
+  [2,"김가윤","신발장","청소물티슈","왼쪽 신발장 정리|쓸기 / 닦아주기"],
+  [3,"김기환","TV/공청기","TV가리개, 테이프","TV 전원 뽑아서 전선은 TV 뒤에 테이프로 고정|TV가리개 씌우기|랜선/HDMI선 정리해서 박스에 넣기|공기청정기 전원 뽑고 전선 뒷면에 테이프로 고정"],
+  [4,"김재준","선풍기","선풍기커버, 테이프","선풍기 덮개 씌우기|전선은 접어서 덮개 안에 넣거나 테이프로 천장에 고정"],
+  [5,"김준영","고사도우미","체크리스트","역할 확인: 학급물품이동 / 신발장 / 게시판 / 낙서|청소도구 수거"],
+  [7,"문종원","낙서","A4용지, 테이프","운동장 쪽 창문 선반, 복도 쪽 창 선반 위 정리|창 아래 벽 낙서 여부 확인|큰 낙서는 A4용지 붙이기"],
+  [8,"박주하","고사도우미","체크리스트","역할 확인: TV공청기 / 선풍기 / 특별구역 / 태블릿함 / 칠판|청소도구 수거"],
+  [9,"박준후","선풍기","선풍기커버, 테이프","선풍기 덮개 씌우기|전선은 접어서 덮개 안에 넣거나 테이프로 천장에 고정"],
+  [10,"백지율","블라인드","청소물티슈","첫 번째, 두 번째 블라인드 1/3 남기고 올리기|창틀 닦기"],
+  [11,"손예원","사물함/책상","먼지털이","1~16번 사물함 열어서 깨끗하게 비워졌는지 확인|선풍기 버튼 쪽 사물함 앞으로 꺼내서 뒤쪽 쓰레기 정리하기|1/2/3열 책상 서랍 비워졌는지 속까지 확인"],
+  [12,"안서원","특별구역","쓰리잘비, 대걸레","특별구역(복도/계단) 쓸기|특별구역(복도/계단) 닦기"],
+  [13,"연이진","교실청소","쓰리잘비, 대걸레","1/2/3열 쓸고 닦기 (교실 앞/뒤 포함)"],
+  [14,"유연서","태블릿함","청소물티슈","태블릿 수량 확인 (교사용 포함)|충전선 연결|먼지 제거|태블릿함 전원 꺼졌는지 확인|교실 뒷문 통해 4층 음악실로 이동"],
+  [15,"이건우","게시판","드라이버","게시판 게시물 모두 제거|드라이버로 나사 뽑을 때 조심하기|못/압정/게시물 잘 모아두기|시계(건전지 빼기), 태극기 철거|모든 물건 선생님 자리에 가져다 두기"],
+  [16,"이건호","교실청소","쓰리잘비, 대걸레","4/5/6열 쓸고 닦기 (교실 앞/뒤 포함)"],
+  [18,"이다해","태블릿함","청소물티슈","태블릿 수량 확인 (교사용 포함)|충전선 연결|먼지 제거|태블릿함 전원 꺼졌는지 확인|교실 뒷문 통해 4층 음악실로 이동"],
+  [19,"이서린","사물함/책상","먼지털이","18~32번 사물함 열어서 깨끗하게 비워졌는지 확인|4/5/6열 책상 서랍 비워졌는지 속까지 확인"],
+  [20,"이수현","게시판","드라이버","게시판 게시물 모두 제거|드라이버로 나사 뽑을 때 조심하기|못/압정/게시물 잘 모아두기|시계(건전지 빼기), 태극기 철거|모든 물건 선생님 자리에 가져다 두기"],
+  [21,"이승기","TV/공청기","TV가리개, 테이프","TV 전원 뽑아서 전선은 TV 뒤에 테이프로 고정|TV가리개 씌우기|랜선/HDMI선 정리해서 박스에 넣기|공기청정기 전원 뽑고 전선 뒷면에 테이프로 고정"],
+  [22,"이지환","쓰레기통/소화기","청소물티슈, 검정비닐","종이 쓰레기 비우기|노란 바구니 선생님 자리에 두기|쓰레기통에 검정 비닐 씌워 앞문에 두기|소화기 먼지 닦아서 쓰레기통 옆에 두기|귀가하면서 쓰레기 봉투 챙겨 나가서 버리기"],
+  [23,"임수인","칠판","칠판지우개","칠판 깨끗하게 정리하기|자석 모두 모아서 선생님 자리에 두기|칠판 전체 물걸레로 닦기|작은 분필은 버리고 정리|분필 두는 곳 닦기|칠판지우개 뒷면 걸레 빨아서 하늘색 바구니에 넣어두기"],
+  [24,"정주원","학급물품 이동","","교탁 옆 여분 책상 2세트: 책상에 의자를 넣어서, 학생용 책상 2개는 서랍 입구가 벽을 향하도록 복도 벽 쪽에 정리|학생용 의자 2개는 사물함 앞에 놓아두기|청소하는 동안 청소도구함은 문이 복도를 향하도록 복도 벽 쪽에 정리|선풍기 버튼 쪽 사물함 앞으로 꺼내서 뒤쪽 쓰레기 정리하기|청소 종료 후 청소도구함 벽 쪽으로 돌려놓기|시험 종료 후 청소도구함 제자리에 놓기"],
+  [25,"조재현","우산","쓰레기봉투","남은 우산 정리해서 쓰레기 봉투에 버리기|우산꽂이 선생님 자리에 가져다 두기"],
+  [26,"조준휘","특별구역","쓰리잘비, 대걸레","특별구역(복도/계단) 쓸기|특별구역(복도/계단) 닦기"],
+  [27,"채하영","고사도우미","체크리스트","역할 확인: 교실청소 / 블라인드 / 출입문 / 우산 / 쓰레기통·소화기 / 사물함·책상|청소도구 수거"],
+  [28,"최지안","출입문","청소물티슈","교실 앞/뒤 문 잘 열리는지 확인|스티커 위에 A4용지 붙이기|레일 먼지 제거"],
+  [29,"한예나","신발장","청소물티슈","오른쪽 신발장 정리|쓸기 / 닦아주기"],
+  [31,"허지안","칠판","칠판지우개","칠판 깨끗하게 정리하기|자석 모두 모아서 선생님 자리에 두기|칠판 전체 물걸레로 닦기|작은 분필은 버리고 정리|분필 두는 곳 닦기|칠판지우개 뒷면 걸레 빨아서 하늘색 바구니에 넣어두기"],
+  [32,"황서현","블라인드","청소물티슈","세 번째, 네 번째 블라인드 1/3 남기고 올리기|창틀 닦기"]
+].map(([no,name,role,tool,tasks]) => ({no,name,role,tool,tasks:tasks.split("|")}));
+
+const checked = {};   // 체크 상태 (페이지를 새로 열면 초기화)
+let view = "person";
+const out = document.getElementById("out");
+const q = document.getElementById("q");
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function card(p) {
+  const items = p.tasks.map((t,i) => {
+    const k = p.no+"-"+i;
+    return `<li><label><input type="checkbox" data-k="${k}" ${checked[k]?"checked":""}><span>${esc(t)}</span></label></li>`;
+  }).join("");
+  return `<div class="card ${p.role==="고사도우미"?"helper":""}">
+    <div class="top"><span class="no">${p.no}</span><span class="name">${esc(p.name)}</span><span class="role">${esc(p.role)}</span></div>
+    <div class="tool">🧰 준비물: ${p.tool ? esc(p.tool) : "없음"}</div>
+    <ul>${items}</ul></div>`;
+}
+
+function render() {
+  const s = q.value.trim();
+  const list = DATA.filter(p => !s || String(p.no)===s || p.name.includes(s) || p.role.includes(s) || p.tasks.some(t=>t.includes(s)));
+  if (!list.length) { out.innerHTML = `<p class="empty">찾는 결과가 없어요.</p>`; return; }
+  if (view === "person") {
+    out.innerHTML = `<div class="grid">${list.map(card).join("")}</div>`;
+  } else {
+    const groups = {};
+    list.forEach(p => (groups[p.role] ||= []).push(p));
+    out.innerHTML = Object.entries(groups).map(([r,ps]) =>
+      `<h2>${esc(r)} (${ps.length}명)</h2><div class="grid">${ps.map(card).join("")}</div>`).join("");
+  }
+}
+
+out.addEventListener("change", e => { if (e.target.dataset.k) checked[e.target.dataset.k] = e.target.checked; });
+q.addEventListener("input", render);
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x===b));
+  view = b.dataset.v; render();
+});
+render();
+</script>
+</body>
+</html>
